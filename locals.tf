@@ -472,6 +472,44 @@ locals {
     maintenance_assignment_virtual_machine = try(var.maintenance.maintenance_assignment_virtual_machine, {})
   }
 
-
   load_test = try(var.load_test, {})
+
+  # =============================================================================
+  # Performance Optimization Helpers
+  # =============================================================================
+  
+  # Common resource group resolver to avoid repeated complex lookups
+  resource_group_resolver = {
+    for key, value in merge(
+      var.storage_accounts,
+      local.webapp.app_services,
+      local.database.mssql_servers,
+      local.database.postgresql_servers,
+      local.networking.vnets
+    ) : key => {
+      resource_group = local.combined_objects_resource_groups[try(value.resource_group.lz_key, local.client_config.landingzone_key)][try(value.resource_group_key, value.resource_group.key)]
+      resource_group_name = can(value.resource_group.name) || can(value.resource_group_name) ? try(value.resource_group.name, value.resource_group_name) : null
+      location = try(local.global_settings.regions[value.region], null)
+    }
+  }
+  
+  # Key Vault resolver for multiple services
+  keyvault_resolver = {
+    for key, value in merge(
+      { for k, v in var.storage_accounts : k => v if can(v.customer_managed_key) },
+      local.database.mssql_servers,
+      local.database.postgresql_servers
+    ) : key => {
+      # Storage account customer managed key
+      keyvault_config = can(value.customer_managed_key) ? 
+        local.combined_objects_keyvaults[try(value.customer_managed_key.lz_key, local.client_config.landingzone_key)][value.customer_managed_key.keyvault_key] :
+        # MSSQL/PostgreSQL server password
+        can(value.administrator_login_password) && !contains(keys(value), "administrator_login_password") ? 
+          local.combined_objects_keyvaults[try(value.keyvault.lz_key, local.client_config.landingzone_key)][try(value.keyvault.key, value.keyvault_key)] :
+        # PostgreSQL server
+        try(value.administrator_login_password, null) == null && can(value.keyvault_key) ? 
+          module.keyvaults[value.keyvault_key] : 
+        null
+    }
+  }
 }

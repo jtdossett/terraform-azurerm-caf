@@ -26,28 +26,47 @@ output "network_watchers" {
 #
 #
 
+# VNet pre-computed configurations for performance optimization
+locals {
+  vnet_configs = {
+    for key, value in local.networking.vnets : key => {
+      # Pre-resolve resource group
+      resource_group = local.combined_objects_resource_groups[try(value.resource_group.lz_key, local.client_config.landingzone_key)][try(value.resource_group_key, value.resource_group.key)]
+      resource_group_name = can(value.resource_group.name) || can(value.resource_group_name) ? try(value.resource_group.name, value.resource_group_name) : null
+      location = try(local.global_settings.regions[value.region], null)
+      
+      # Pre-resolve DDOS protection
+      ddos_id = try(local.combined_objects_ddos_services[try(value.ddos_services_lz_key, local.client_config.landingzone_key)][try(value.ddos_services_key, value.ddos_services_key)].id, "")
+    }
+  }
+}
+
 module "networking" {
   depends_on = [module.network_watchers]
   source     = "./modules/networking/virtual_network"
   for_each   = local.networking.vnets
 
+  client_config     = local.client_config
+  global_settings   = local.global_settings
+  settings          = each.value
+  tags              = try(each.value.tags, null)
+  
+  # Use pre-computed DDOS protection
+  ddos_id           = local.vnet_configs[each.key].ddos_id
+  
+  # Use cached objects
   application_security_groups       = local.combined_objects_application_security_groups
-  client_config                     = local.client_config
-  ddos_id                           = try(local.combined_objects_ddos_services[try(each.value.ddos_services_lz_key, local.client_config.landingzone_key)][try(each.value.ddos_services_key, each.value.ddos_services_key)].id, "")
   diagnostics                       = local.combined_diagnostics
-  global_settings                   = local.global_settings
   network_security_groups           = module.network_security_groups
   network_security_group_definition = local.networking.network_security_group_definition
   network_watchers                  = local.combined_objects_network_watchers
   route_tables                      = module.route_tables
-  settings                          = each.value
-  tags                              = try(each.value.tags, null)
 
+  # Use pre-computed resource group info
   base_tags           = local.global_settings.inherit_tags
-  resource_group      = local.combined_objects_resource_groups[try(each.value.resource_group.lz_key, local.client_config.landingzone_key)][try(each.value.resource_group_key, each.value.resource_group.key)]
-  resource_group_name = can(each.value.resource_group.name) || can(each.value.resource_group_name) ? try(each.value.resource_group.name, each.value.resource_group_name) : null
-  location            = try(local.global_settings.regions[each.value.region], null)
-
+  resource_group      = local.vnet_configs[each.key].resource_group
+  resource_group_name = local.vnet_configs[each.key].resource_group_name
+  location            = local.vnet_configs[each.key].location
 
   #assumed from remote lz only to prevent circular references
   #

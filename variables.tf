@@ -264,7 +264,76 @@ variable "managed_identities" {
 
 variable "keyvaults" {
   description = "Configuration object - Azure Key Vault resources"
-  default     = {}
+  type = map(object({
+    name                     = string
+    resource_group_key       = optional(string)
+    resource_group           = optional(object({
+      key    = optional(string)
+      lz_key = optional(string)
+      name   = optional(string)
+    }))
+    sku_name                        = optional(string, "standard")
+    soft_delete_retention_days      = optional(number, 90)
+    purge_protection_enabled        = optional(bool, false)
+    enabled_for_disk_encryption     = optional(bool, false)
+    enabled_for_deployment          = optional(bool, false)
+    enabled_for_template_deployment = optional(bool, false)
+    enable_rbac_authorization       = optional(bool, false)
+    public_network_access_enabled   = optional(bool, true)
+    # Add other common Key Vault properties as needed
+  }))
+  default = {}
+
+  # Key Vault name validation (3-24 characters, alphanumeric and hyphens)
+  validation {
+    condition = alltrue([
+      for k, v in var.keyvaults : can(regex("^[a-zA-Z][a-zA-Z0-9-]{1,22}[a-zA-Z0-9]$", v.name))
+    ])
+    error_message = "Key Vault names must be 3-24 characters, start with a letter, end with letter or digit, and contain only alphanumeric characters and hyphens."
+  }
+
+  # SKU validation
+  validation {
+    condition = alltrue([
+      for k, v in var.keyvaults : contains(["standard", "premium"], v.sku_name)
+    ])
+    error_message = "Key Vault sku_name must be either 'standard' or 'premium'."
+  }
+
+  # Soft delete retention days validation
+  validation {
+    condition = alltrue([
+      for k, v in var.keyvaults : v.soft_delete_retention_days >= 7 && v.soft_delete_retention_days <= 90
+    ])
+    error_message = "Key Vault soft_delete_retention_days must be between 7 and 90 days."
+  }
+
+  # Purge protection requires soft delete (implicit validation)
+  validation {
+    condition = alltrue([
+      for k, v in var.keyvaults : 
+      v.purge_protection_enabled == true ? v.soft_delete_retention_days >= 7 : true
+    ])
+    error_message = "Key Vault purge protection requires soft delete to be enabled (retention days >= 7)."
+  }
+
+  # Cross-variable validation: Resource group references
+  validation {
+    condition = alltrue([
+      for k, v in var.keyvaults : 
+      v.resource_group_key != null ? contains(keys(var.resource_groups), v.resource_group_key) : true
+    ])
+    error_message = "All keyvaults must reference valid resource_group_key from resource_groups variable."
+  }
+
+  # Security best practice: Warn about public access in production
+  validation {
+    condition = alltrue([
+      for k, v in var.keyvaults : 
+      var.environment == "prod" ? v.public_network_access_enabled == false : true
+    ])
+    error_message = "Key Vaults in production environment should have public_network_access_enabled set to false for security."
+  }
 }
 
 variable "keyvault_access_policies" {
@@ -297,7 +366,56 @@ variable "dynamic_keyvault_secrets" {
 ## Storage variables
 variable "storage_accounts" {
   description = "Configuration object - Storage account resources"
-  default     = {}
+  type = map(object({
+    name                     = string
+    resource_group_key       = optional(string)
+    resource_group           = optional(object({
+      key    = optional(string)
+      lz_key = optional(string)
+      name   = optional(string)
+    }))
+    account_tier            = optional(string, "Standard")
+    account_replication_type = optional(string, "LRS")
+    account_kind            = optional(string, "StorageV2")
+    min_tls_version         = optional(string, "TLS1_2")
+    allow_blob_public_access = optional(bool, false)
+    # Add other common storage account properties as needed
+  }))
+  default = {}
+
+  # Storage account name validation
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_accounts : can(regex("^[a-z0-9]{3,24}$", v.name))
+    ])
+    error_message = "Storage account names must be 3-24 lowercase alphanumeric characters."
+  }
+
+  # Account tier and kind validation
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_accounts : 
+      v.account_kind != "BlockBlobStorage" && v.account_kind != "FileStorage" ? true : v.account_tier == "Premium"
+    ])
+    error_message = "BlockBlobStorage and FileStorage require Premium tier."
+  }
+
+  # TLS version validation
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_accounts : contains(["TLS1_0", "TLS1_1", "TLS1_2"], v.min_tls_version)
+    ])
+    error_message = "min_tls_version must be TLS1_0, TLS1_1, or TLS1_2."
+  }
+
+  # Cross-variable validation: Resource group references
+  validation {
+    condition = alltrue([
+      for k, v in var.storage_accounts : 
+      v.resource_group_key != null ? contains(keys(var.resource_groups), v.resource_group_key) : true
+    ])
+    error_message = "All storage_accounts must reference valid resource_group_key from resource_groups variable."
+  }
 }
 variable "storage" {
   description = "Configuration object - Storage account resources"

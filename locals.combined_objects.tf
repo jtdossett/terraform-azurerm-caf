@@ -1,188 +1,356 @@
 locals {
+  # Performance optimization: Helper for building combined objects to reduce repetitive merge operations
+  _local_objects_map = {
+    aadb2c_directory                               = module.aadb2c_directory
+    aks_clusters                                   = module.aks_clusters
+    api_management                                 = module.api_management
+    api_management_api                             = module.api_management_api
+    api_management_api_operation                   = module.api_management_api_operation
+    api_management_gateway                         = module.api_management_gateway
+    api_management_logger                          = module.api_management_logger
+    api_management_product                         = module.api_management_product
+    app_config                                     = module.app_config
+    app_service_environments                       = module.app_service_environments
+    app_service_environments_v3                    = merge(module.app_service_environments_v3, lookup(var.data_sources, "app_service_environments_v3", {}))
+    app_service_plans                              = merge(module.app_service_plans, lookup(var.data_sources, "app_service_plans", {}))
+    app_services                                   = module.app_services
+    application_gateway_platforms                  = module.application_gateway_platforms
+    application_gateway_waf_policies               = module.application_gateway_waf_policies
+    application_gateways                           = module.application_gateways
+    azurerm_application_insights                   = module.azurerm_application_insights
+    azurerm_application_insights_standard_web_test = module.azurerm_application_insights_standard_web_test
+    azurerm_application_insights_web_test          = module.azurerm_application_insights_web_test
+    application_security_groups                    = module.application_security_groups
+    automations                                    = module.automations
+    availability_sets                              = module.availability_sets
+    container_registry                             = module.container_registry
+    azuread_administrative_units                   = module.azuread_administrative_unit
+    azuread_applications_v1                        = module.azuread_applications_v1
+    azuread_applications                           = module.azuread_applications
+    azuread_groups                                 = merge(module.azuread_groups, lookup(var.data_sources, "azuread_groups", {}))
+    azuread_service_principal_passwords            = module.azuread_service_principal_passwords
+    azuread_service_principals                     = module.azuread_service_principals
+    azuread_users                                  = module.azuread_users
+    azurerm_firewall_policies                      = module.azurerm_firewall_policies
+    azurerm_firewalls                              = module.azurerm_firewalls
+    storage_accounts                               = merge(module.storage_accounts, lookup(var.data_sources, "storage_accounts", {}))
+    mssql_servers                                  = merge(module.mssql_servers, lookup(var.data_sources, "mssql_servers", {}))
+    postgresql_servers                             = merge(module.postgresql_servers, lookup(var.data_sources, "postgresql_servers", {}))
+    vnets                                          = merge(module.networking, lookup(var.data_sources, "vnets", {}))
+    virtual_subnets                                = merge(module.virtual_subnets, lookup(var.data_sources, "virtual_subnets", {}))
+    
+    # Additional modules for optimization
+    api_management_api_operation                   = module.api_management_api_operation
+    api_management_logger                          = module.api_management_logger
+    api_management_product                         = module.api_management_product
+    container_app_environment_certificates         = module.container_app_environment_certificates
+    container_app_environment_storages             = module.container_app_environment_storages
+    cosmos_dbs                                     = module.cosmos_dbs
+    cosmosdb_sql_databases                         = module.cosmosdb_sql_databases
+    data_factory                                   = merge(module.data_factory, lookup(var.data_sources, "data_factory", {}))
+    data_factory_integration_runtime_azure_ssis    = module.data_factory_integration_runtime_azure_ssis
+    data_factory_integration_runtime_self_hosted   = module.data_factory_integration_runtime_self_hosted
+    data_factory_linked_service_azure_blob_storage = module.data_factory_linked_service_azure_blob_storage
+    data_factory_linked_service_cosmosdb           = module.data_factory_linked_service_cosmosdb
+    data_factory_linked_service_mysql              = module.data_factory_linked_service_mysql
+    data_factory_linked_service_postgresql         = module.data_factory_linked_service_postgresql
+    data_factory_linked_service_sql_server         = module.data_factory_linked_service_sql_server
+    data_factory_linked_service_web                = module.data_factory_linked_service_web
+    data_factory_pipeline                          = module.data_factory_pipeline
+    database_migration_services                    = module.database_migration_services
+    databricks_workspaces                          = module.databricks_workspaces
+    databricks_access_connectors                   = module.databricks_access_connectors
+    dedicated_host_groups                          = module.dedicated_host_groups
+    dedicated_hosts                                = module.dedicated_hosts
+    diagnostic_storage_accounts                    = module.diagnostic_storage_accounts
+    digital_twins_instances                        = module.digital_twins_instances
+    disk_encryption_sets                           = merge(module.disk_encryption_sets, module.disk_encryption_sets_external)
+    dns_zones                                      = module.dns_zones
+    domain_name_registrations                      = module.domain_name_registrations
+    event_hub_auth_rules                           = module.event_hub_auth_rules
+    event_hub_namespaces                           = module.event_hub_namespaces
+    event_hubs                                     = module.event_hubs
+    eventgrid_domain                               = module.eventgrid_domain
+    eventgrid_topic                                = module.eventgrid_topic
+    eventgrid_system_topic                         = module.eventgrid_system_topic
+    express_route_circuit_authorizations           = module.express_route_circuit_authorizations
+    express_route_circuit_peerings                 = module.express_route_circuit_peerings
+    express_route_circuits                         = module.express_route_circuits
+    front_doors                                    = module.front_doors
+    front_door_waf_policies                        = module.front_door_waf_policies
+    function_apps                                  = module.function_apps
+    image_definitions                              = module.image_definitions
+    integration_service_environment                = module.integration_service_environment
+    iot_central_application                        = module.iot_central_application
+    iot_dps_certificate                            = module.iot_dps_certificate
+    iot_dps_shared_access_policy                   = module.iot_dps_shared_access_policy
+    iot_hub                                        = module.iot_hub
+    iot_hub_certificate                            = module.iot_hub_certificate
+    iot_hub_consumer_groups                        = module.iot_hub_consumer_groups
+    iot_hub_dps                                    = module.iot_hub_dps
+    iot_hub_shared_access_policy                   = module.iot_hub_shared_access_policy
+    iot_security_device_group                      = module.iot_security_device_group
+    iot_security_solution                          = module.iot_security_solution
+    keyvault_certificate_requests                  = module.keyvault_certificate_requests
+    keyvault_certificates                          = module.keyvault_certificates
+    keyvault_keys                                  = merge(module.keyvault_keys, lookup(var.data_sources, "keyvault_keys", {}))
+    keyvaults                                      = merge(module.keyvaults, lookup(var.data_sources, "keyvaults", {}))
+    kusto_clusters                                 = module.kusto_clusters
+    kusto_databases                                = module.kusto_databases
+    lb                                             = module.lb
+    lb_backend_address_pool                        = module.lb_backend_address_pool
+    lb_probe                                       = module.lb_probe
+    load_balancers                                 = module.load_balancers
+    load_test                                      = module.load_test
+    log_analytics                                  = module.log_analytics
+    logic_app_integration_account                  = module.logic_app_integration_account
+    logic_app_standard                             = module.logic_app_standard
+    logic_app_workflow                             = module.logic_app_workflow
+    machine_learning_workspaces                   = module.machine_learning_workspaces
+    maintenance_configuration                      = module.maintenance_configuration
+    maintenance_assignment_virtual_machine         = module.maintenance_assignment_virtual_machine
+    managed_identities                             = module.managed_identities
+    maps_accounts                                  = module.maps_accounts
+    monitor_action_groups                          = module.monitor_action_groups
+    mssql_databases                                = module.mssql_databases
+    mssql_elastic_pools                            = merge(module.mssql_elastic_pools, lookup(var.data_sources, "mssql_elastic_pools", {}))
+    mssql_managed_databases                        = merge(module.mssql_managed_databases, module.mssql_managed_databases_v1)
+    mssql_managed_instances                        = merge(module.mssql_managed_instances, module.mssql_managed_instances_v1, lookup(var.data_sources, "mssql_managed_instances", {}))
+    mssql_managed_instances_secondary              = merge(module.mssql_managed_instances_secondary, module.mssql_managed_instances_secondary_v1, lookup(var.data_sources, "mssql_managed_instances_secondary", {}))
+    mysql_flexible_server                          = module.mysql_flexible_server
+    mysql_servers                                  = module.mysql_servers
+    nat_gateways                                   = module.nat_gateways
+    network_profiles                               = module.network_profiles
+    network_security_groups                        = module.network_security_groups
+    network_watchers                               = module.network_watchers
+    postgresql_flexible_servers                    = module.postgresql_flexible_servers
+    private_dns                                    = module.private_dns
+    private_dns_resolver_dns_forwarding_rulesets   = module.private_dns_resolver_dns_forwarding_rulesets
+    private_dns_resolver_inbound_endpoints         = module.private_dns_resolver_inbound_endpoints
+    private_dns_resolver_outbound_endpoints        = module.private_dns_resolver_outbound_endpoints
+    private_dns_resolvers                          = module.private_dns_resolvers
+    private_endpoints                              = module.private_endpoints
+    proximity_placement_groups                     = module.proximity_placement_groups
+    public_ip_addresses                            = module.public_ip_addresses
+    public_ip_prefixes                             = module.public_ip_prefixes
+    purview_accounts                               = module.purview_accounts
+    recovery_vaults                                = merge(module.recovery_vaults, lookup(var.data_sources, "recovery_vaults", {}))
+    redis_caches                                   = module.redis_caches
+    relay_hybrid_connection                        = module.relay_hybrid_connection
+    relay_namespace                                = module.relay_namespace
+    route_tables                                   = module.route_tables
+    search_service                                 = module.search_service
+    sentinel_watchlists                            = module.sentinel_watchlists
+    servicebus_namespaces                          = module.servicebus_namespaces
+    servicebus_queues                              = module.servicebus_queues
+    servicebus_topics                              = module.servicebus_topics
+    signalr_services                               = module.signalr_services
+    storage_account_file_shares                    = module.storage_account_file_shares
+    storage_account_queues                         = module.storage_account_queues
+    storage_containers                             = module.storage_containers
+    synapse_workspaces                             = module.synapse_workspaces
+    traffic_manager_azure_endpoint                 = module.traffic_manager_azure_endpoint
+    traffic_manager_external_endpoint              = module.traffic_manager_external_endpoint
+    traffic_manager_nested_endpoint                = module.traffic_manager_nested_endpoint
+    traffic_manager_profile                        = module.traffic_manager_profile
+    virtual_wans                                   = merge(module.virtual_wans, lookup(var.data_sources, "virtual_wans", {}))
+    virtual_hubs                                   = merge(module.virtual_hubs, lookup(var.data_sources, "virtual_hubs", {}))
+    virtual_machine_scale_sets                     = module.virtual_machine_scale_sets
+    virtual_machines                               = module.virtual_machines
+    vmware_clusters                                = module.vmware_clusters
+    vmware_express_route_authorizations            = module.vmware_express_route_authorizations
+    vmware_private_clouds                          = module.vmware_private_clouds
+    vpn_gateway_connections                        = module.vpn_gateway_connections
+    vpn_gateway_nat_rules                          = module.vpn_gateway_nat_rules
+    vpn_sites                                      = module.vpn_sites
+    web_pubsub_hubs                                = module.web_pubsub_hubs
+    web_pubsubs                                    = module.web_pubsubs
+    wvd_application_groups                         = module.wvd_application_groups
+    wvd_applications                               = module.wvd_applications
+    wvd_host_pools                                 = module.wvd_host_pools
+    wvd_workspaces                                 = module.wvd_workspaces
+  }
+  
+  # Helper function to build combined objects with less repetition
+  _build_combined_object = {
+    for key, local_module in local._local_objects_map : key => merge(
+      tomap({ (local.client_config.landingzone_key) = local_module }),
+      lookup(var.remote_objects, key, {}),
+      lookup(var.data_sources, key, {})
+    )
+  }
+
+  
   # CAF landing zones can retrieve remote objects from a different landing zone and the
   # combined_objects will merge it with the local objects
-  combined_objects_aadb2c_directory                               = merge(tomap({ (local.client_config.landingzone_key) = module.aadb2c_directory }), lookup(var.remote_objects, "aadb2c_directory", {}))
-  combined_objects_aks_clusters                                   = merge(tomap({ (local.client_config.landingzone_key) = module.aks_clusters }), lookup(var.remote_objects, "aks_clusters", {}), lookup(var.data_sources, "aks_clusters", {}))
-  combined_objects_api_management                                 = merge(tomap({ (local.client_config.landingzone_key) = module.api_management }), lookup(var.remote_objects, "api_management", {}), lookup(var.data_sources, "api_management", {}))
-  combined_objects_api_management_api                             = merge(tomap({ (local.client_config.landingzone_key) = module.api_management_api }), lookup(var.remote_objects, "api_management_api", {}), lookup(var.data_sources, "api_management_api", {}))
-  combined_objects_api_management_api_operation                   = merge(tomap({ (local.client_config.landingzone_key) = module.api_management_api_operation }), lookup(var.remote_objects, "api_management_api_operation", {}))
-  combined_objects_api_management_gateway                         = merge(tomap({ (local.client_config.landingzone_key) = module.api_management_gateway }), lookup(var.remote_objects, "api_management_gateway", {}), lookup(var.data_sources, "api_management_gateway", {}))
-  combined_objects_api_management_logger                          = merge(tomap({ (local.client_config.landingzone_key) = module.api_management_logger }), lookup(var.remote_objects, "api_management_logger", {}))
-  combined_objects_api_management_product                         = merge(tomap({ (local.client_config.landingzone_key) = module.api_management_product }), lookup(var.remote_objects, "api_management_product", {}))
-  combined_objects_app_config                                     = merge(tomap({ (local.client_config.landingzone_key) = module.app_config }), lookup(var.remote_objects, "app_config", {}), lookup(var.data_sources, "app_config", {}))
-  combined_objects_app_service_environments                       = merge(tomap({ (local.client_config.landingzone_key) = module.app_service_environments }), lookup(var.remote_objects, "app_service_environments", {}), lookup(var.data_sources, "app_service_environments", {}))
+  combined_objects_aadb2c_directory                               = local._build_combined_object["aadb2c_directory"]
+  combined_objects_aks_clusters                                   = local._build_combined_object["aks_clusters"]
+  combined_objects_api_management                                 = local._build_combined_object["api_management"]
+  combined_objects_api_management_api                             = local._build_combined_object["api_management_api"]
+  combined_objects_api_management_api_operation                   = local._build_combined_object["api_management_api_operation"]
+  combined_objects_api_management_gateway                         = local._build_combined_object["api_management_gateway"]
+  combined_objects_api_management_logger                          = local._build_combined_object["api_management_logger"]
+  combined_objects_api_management_product                         = local._build_combined_object["api_management_product"]
+  combined_objects_app_config                                     = local._build_combined_object["app_config"]
+  combined_objects_app_service_environments                       = local._build_combined_object["app_service_environments"]
   combined_objects_app_service_environments_all                   = merge(local.combined_objects_app_service_environments, local.combined_objects_app_service_environments_v3)
-  combined_objects_app_service_environments_v3                    = merge(tomap({ (local.client_config.landingzone_key) = merge(module.app_service_environments_v3, lookup(var.data_sources, "app_service_environments_v3", {})) }), lookup(var.remote_objects, "app_service_environments_v3", {}))
-  combined_objects_app_service_plans                              = merge(tomap({ (local.client_config.landingzone_key) = merge(module.app_service_plans, lookup(var.data_sources, "app_service_plans", {})) }), lookup(var.remote_objects, "app_service_plans", {}))
-  combined_objects_app_services                                   = merge(tomap({ (local.client_config.landingzone_key) = module.app_services }), lookup(var.remote_objects, "app_services", {}), lookup(var.data_sources, "app_services", {}))
-  combined_objects_application_gateway_platforms                  = merge(tomap({ (local.client_config.landingzone_key) = module.application_gateway_platforms }), lookup(var.remote_objects, "application_gateway_platforms", {}))
-  combined_objects_application_gateway_waf_policies               = merge(tomap({ (local.client_config.landingzone_key) = module.application_gateway_waf_policies }), lookup(var.remote_objects, "application_gateway_waf_policies", {}))
-  combined_objects_application_gateways                           = merge(tomap({ (local.client_config.landingzone_key) = module.application_gateways }), lookup(var.remote_objects, "application_gateways", {}), lookup(var.data_sources, "application_gateways", {}))
-  combined_objects_application_insights                           = merge(tomap({ (local.client_config.landingzone_key) = module.azurerm_application_insights }), lookup(var.remote_objects, "azurerm_application_insights", {}), lookup(var.data_sources, "azurerm_application_insights", {}))
-  combined_objects_application_insights_standard_web_test         = merge(tomap({ (local.client_config.landingzone_key) = module.azurerm_application_insights_standard_web_test }), lookup(var.remote_objects, "azurerm_application_insights_standard_web_test", {}))
-  combined_objects_application_insights_web_test                  = merge(tomap({ (local.client_config.landingzone_key) = module.azurerm_application_insights_web_test }), lookup(var.remote_objects, "azurerm_application_insights_web_test", {}))
-  combined_objects_application_security_groups                    = merge(tomap({ (local.client_config.landingzone_key) = module.application_security_groups }), lookup(var.remote_objects, "application_security_groups", {}))
-  combined_objects_automations                                    = merge(tomap({ (local.client_config.landingzone_key) = module.automations }), lookup(var.remote_objects, "automations", {}))
-  combined_objects_availability_sets                              = merge(tomap({ (local.client_config.landingzone_key) = module.availability_sets }), lookup(var.remote_objects, "availability_sets", {}))
-  combined_objects_azure_container_registries                     = merge(tomap({ (local.client_config.landingzone_key) = module.container_registry }), lookup(var.remote_objects, "container_registry", {}))
-  combined_objects_azuread_administrative_units                   = merge(tomap({ (local.client_config.landingzone_key) = module.azuread_administrative_unit }), lookup(var.remote_objects, "administrative_units", {}))
-  combined_objects_azuread_applications                           = merge(tomap({ (local.client_config.landingzone_key) = module.azuread_applications_v1 }), lookup(var.remote_objects, "azuread_applications", {}))
-  combined_objects_azuread_apps                                   = merge(tomap({ (local.client_config.landingzone_key) = module.azuread_applications }), lookup(var.remote_objects, "azuread_apps", {}))
-  combined_objects_azuread_groups                                 = merge(tomap({ (local.client_config.landingzone_key) = merge(module.azuread_groups, lookup(var.data_sources, "azuread_groups", {})) }), lookup(var.remote_objects, "azuread_groups", {}))
-  combined_objects_azuread_service_principal_passwords            = merge(tomap({ (local.client_config.landingzone_key) = module.azuread_service_principal_passwords }), lookup(var.remote_objects, "azuread_service_principal_passwords", {}))
-  combined_objects_azuread_service_principals                     = merge(tomap({ (local.client_config.landingzone_key) = module.azuread_service_principals }), lookup(var.remote_objects, "azuread_service_principals", {}), lookup(var.data_sources, "azuread_service_principals", {}))
-  combined_objects_azuread_users                                  = merge(tomap({ (local.client_config.landingzone_key) = module.azuread_users }), lookup(var.remote_objects, "azuread_users", {}), lookup(var.data_sources, "azuread_users", {}))
-  combined_objects_azurerm_firewall_policies                      = merge(tomap({ (local.client_config.landingzone_key) = module.azurerm_firewall_policies }), lookup(var.remote_objects, "azurerm_firewall_policies", {}), lookup(var.data_sources, "azurerm_firewall_policies", {}))
-  combined_objects_azurerm_firewalls                              = merge(tomap({ (local.client_config.landingzone_key) = module.azurerm_firewalls }), lookup(var.remote_objects, "azurerm_firewalls", {}), lookup(var.data_sources, "azurerm_firewalls", {}))
-  combined_objects_backup_vault_instances                         = merge(tomap({ (local.client_config.landingzone_key) = local.backup_vault_instances }), lookup(var.remote_objects, "backup_vault_instances", {}))
-  combined_objects_backup_vault_policies                          = merge(tomap({ (local.client_config.landingzone_key) = local.backup_vault_policies }), lookup(var.remote_objects, "backup_vault_policies", {}))
-  combined_objects_backup_vaults                                  = merge(tomap({ (local.client_config.landingzone_key) = module.backup_vaults }), lookup(var.remote_objects, "backup_vaults", {}))
-  combined_objects_batch_accounts                                 = merge(tomap({ (local.client_config.landingzone_key) = module.batch_accounts }), lookup(var.remote_objects, "batch_accounts", {}))
-  combined_objects_batch_applications                             = merge(tomap({ (local.client_config.landingzone_key) = module.batch_applications }), lookup(var.remote_objects, "batch_applications", {}))
-  combined_objects_batch_certificates                             = merge(tomap({ (local.client_config.landingzone_key) = module.batch_certificates }), lookup(var.remote_objects, "batch_certificates", {}))
-  combined_objects_batch_jobs                                     = merge(tomap({ (local.client_config.landingzone_key) = module.batch_jobs }), lookup(var.remote_objects, "batch_jobs", {}))
-  combined_objects_batch_pools                                    = merge(tomap({ (local.client_config.landingzone_key) = module.batch_pools }), lookup(var.remote_objects, "batch_pools", {}))
-  combined_objects_cdn_profile                                    = merge(tomap({ (local.client_config.landingzone_key) = module.cdn_profile }), lookup(var.remote_objects, "cdn_profile", {}), lookup(var.data_sources, "cdn_profile", {}))
-  combined_objects_cognitive_services_accounts                    = merge(tomap({ (local.client_config.landingzone_key) = module.cognitive_services_account }), lookup(var.remote_objects, "cognitive_services_account", {}), lookup(var.data_sources, "cognitive_services_account", {}))
-  combined_objects_consumption_budgets_resource_groups            = merge(tomap({ (local.client_config.landingzone_key) = module.consumption_budgets_resource_groups }), lookup(var.remote_objects, "consumption_budgets_resource_groups", {}), lookup(var.data_sources, "consumption_budgets_resource_groups", {}))
-  combined_objects_consumption_budgets_subscriptions              = merge(tomap({ (local.client_config.landingzone_key) = module.consumption_budgets_subscriptions }), lookup(var.remote_objects, "consumption_budgets_subscriptions", {}), lookup(var.data_sources, "consumption_budgets_subscriptions", {}))
-  combined_objects_container_registry                             = merge(tomap({ (local.client_config.landingzone_key) = module.container_registry }), lookup(var.remote_objects, "container_registry", {}), lookup(var.data_sources, "container_registry", {}))
-  combined_objects_container_app_environments                     = merge(tomap({ (local.client_config.landingzone_key) = module.container_app_environments }), lookup(var.remote_objects, "container_app_environments", {}))
-  combined_objects_container_app_environment_certificates         = merge(tomap({ (local.client_config.landingzone_key) = module.container_app_environment_certificates }), lookup(var.remote_objects, "container_app_environment_certificates", {}))
-  combined_objects_container_app_environment_storages             = merge(tomap({ (local.client_config.landingzone_key) = module.container_app_environment_storages }), lookup(var.remote_objects, "container_app_environment_storages", {}))
-  combined_objects_cosmos_dbs                                     = merge(tomap({ (local.client_config.landingzone_key) = module.cosmos_dbs }), lookup(var.remote_objects, "cosmos_dbs", {}), lookup(var.data_sources, "cosmos_dbs", {}))
-  combined_objects_cosmosdb_sql_databases                         = merge(tomap({ (local.client_config.landingzone_key) = module.cosmosdb_sql_databases }), lookup(var.remote_objects, "cosmosdb_sql_databases", {}))
-  combined_objects_data_factory                                   = merge(tomap({ (local.client_config.landingzone_key) = merge(module.data_factory, lookup(var.data_sources, "data_factory", {})) }), lookup(var.remote_objects, "data_factory", {}))
+  combined_objects_app_service_environments_v3                    = local._build_combined_object["app_service_environments_v3"]
+  combined_objects_app_service_plans                              = local._build_combined_object["app_service_plans"]
+  combined_objects_app_services                                   = local._build_combined_object["app_services"]
+  combined_objects_application_gateway_platforms                  = local._build_combined_object["application_gateway_platforms"]
+  combined_objects_application_gateway_waf_policies               = local._build_combined_object["application_gateway_waf_policies"]
+  combined_objects_application_gateways                           = local._build_combined_object["application_gateways"]
+  combined_objects_application_insights                           = local._build_combined_object["azurerm_application_insights"]
+  combined_objects_application_insights_standard_web_test         = local._build_combined_object["azurerm_application_insights_standard_web_test"]
+  combined_objects_application_insights_web_test                  = local._build_combined_object["azurerm_application_insights_web_test"]
+  combined_objects_application_security_groups                    = local._build_combined_object["application_security_groups"]
+  combined_objects_automations                                    = local._build_combined_object["automations"]
+  combined_objects_availability_sets                              = local._build_combined_object["availability_sets"]
+  combined_objects_azure_container_registries                     = local._build_combined_object["container_registry"]
+  combined_objects_azuread_administrative_units                   = local._build_combined_object["azuread_administrative_units"]
+  combined_objects_azuread_applications                           = local._build_combined_object["azuread_applications_v1"]
+  combined_objects_azuread_apps                                   = local._build_combined_object["azuread_applications"]
+  combined_objects_azuread_groups                                 = local._build_combined_object["azuread_groups"]
+  combined_objects_azuread_service_principal_passwords            = local._build_combined_object["azuread_service_principal_passwords"]
+  combined_objects_azuread_service_principals                     = local._build_combined_object["azuread_service_principals"]
+  combined_objects_azuread_users                                  = local._build_combined_object["azuread_users"]
+  combined_objects_azurerm_firewall_policies                      = local._build_combined_object["azurerm_firewall_policies"]
+  combined_objects_azurerm_firewalls                              = local._build_combined_object["azurerm_firewalls"]
+  combined_objects_container_app_environment_certificates         = local._build_combined_object["container_app_environment_certificates"]
+  combined_objects_container_app_environment_storages             = local._build_combined_object["container_app_environment_storages"]
+  combined_objects_cosmos_dbs                                     = local._build_combined_object["cosmos_dbs"]
+  combined_objects_cosmosdb_sql_databases                         = local._build_combined_object["cosmosdb_sql_databases"]
+  combined_objects_data_factory                                   = local._build_combined_object["data_factory"]
   combined_objects_data_factory_integration_runtime_azure_ssis    = merge(tomap({ (local.client_config.landingzone_key) = module.data_factory_integration_runtime_azure_ssis }), lookup(var.remote_objects, "combined_objects_data_factory_integration_runtime_azure_ssis", {}))
-  combined_objects_data_factory_integration_runtime_self_hosted   = merge(tomap({ (local.client_config.landingzone_key) = module.data_factory_integration_runtime_self_hosted }), lookup(var.remote_objects, "data_factory_integration_runtime_self_hosted", {}))
-  combined_objects_data_factory_linked_service_azure_blob_storage = merge(tomap({ (local.client_config.landingzone_key) = module.data_factory_linked_service_azure_blob_storage }), lookup(var.remote_objects, "data_factory_linked_service_azure_blob_storage", {}))
-  combined_objects_data_factory_linked_service_cosmosdb           = merge(tomap({ (local.client_config.landingzone_key) = module.data_factory_linked_service_cosmosdb }), lookup(var.remote_objects, "data_factory_linked_service_cosmosdb", {}))
-  combined_objects_data_factory_linked_service_mysql              = merge(tomap({ (local.client_config.landingzone_key) = module.data_factory_linked_service_mysql }), lookup(var.remote_objects, "data_factory_linked_service_mysql", {}))
-  combined_objects_data_factory_linked_service_postgresql         = merge(tomap({ (local.client_config.landingzone_key) = module.data_factory_linked_service_postgresql }), lookup(var.remote_objects, "data_factory_linked_service_postgresql", {}))
-  combined_objects_data_factory_linked_service_sql_server         = merge(tomap({ (local.client_config.landingzone_key) = module.data_factory_linked_service_sql_server }), lookup(var.remote_objects, "data_factory_linked_service_sql_server", {}))
-  combined_objects_data_factory_linked_service_web                = merge(tomap({ (local.client_config.landingzone_key) = module.data_factory_linked_service_web }), lookup(var.remote_objects, "data_factory_linked_service_web", {}))
-  combined_objects_data_factory_pipeline                          = merge(tomap({ (local.client_config.landingzone_key) = module.data_factory_pipeline }), lookup(var.remote_objects, "data_factory_pipeline", {}))
-  combined_objects_database_migration_services                    = merge(tomap({ (local.client_config.landingzone_key) = module.database_migration_services }), lookup(var.remote_objects, "database_migration_services", {}))
-  combined_objects_databricks_workspaces                          = merge(tomap({ (local.client_config.landingzone_key) = module.databricks_workspaces }), lookup(var.remote_objects, "databricks_workspaces", {}), lookup(var.data_sources, "databricks_workspaces", {}))
-  combined_objects_databricks_access_connectors                   = merge(tomap({ (local.client_config.landingzone_key) = module.databricks_access_connectors }), lookup(var.remote_objects, "databricks_access_connectors", {}), lookup(var.data_sources, "databricks_access_connectors", {}))
+  combined_objects_data_factory_integration_runtime_self_hosted   = local._build_combined_object["data_factory_integration_runtime_self_hosted"]
+  combined_objects_data_factory_linked_service_azure_blob_storage = local._build_combined_object["data_factory_linked_service_azure_blob_storage"]
+  combined_objects_data_factory_linked_service_cosmosdb           = local._build_combined_object["data_factory_linked_service_cosmosdb"]
+  combined_objects_data_factory_linked_service_mysql              = local._build_combined_object["data_factory_linked_service_mysql"]
+  combined_objects_data_factory_linked_service_postgresql         = local._build_combined_object["data_factory_linked_service_postgresql"]
+  combined_objects_data_factory_linked_service_sql_server         = local._build_combined_object["data_factory_linked_service_sql_server"]
+  combined_objects_data_factory_linked_service_web                = local._build_combined_object["data_factory_linked_service_web"]
+  combined_objects_data_factory_pipeline                          = local._build_combined_object["data_factory_pipeline"]
+  combined_objects_database_migration_services                    = local._build_combined_object["database_migration_services"]
+  combined_objects_databricks_workspaces                          = local._build_combined_object["databricks_workspaces"]
+  combined_objects_databricks_access_connectors                   = local._build_combined_object["databricks_access_connectors"]
   combined_objects_ddos_services                                  = merge(tomap({ (local.client_config.landingzone_key) = azurerm_network_ddos_protection_plan.ddos_protection_plan }), lookup(var.remote_objects, "ddos_services", {}), lookup(var.remote_objects, "ddos_services", {}))
-  combined_objects_dedicated_host_groups                          = merge(tomap({ (local.client_config.landingzone_key) = module.dedicated_host_groups }), lookup(var.remote_objects, "dedicated_host_groups", {}), lookup(var.data_sources, "dedicated_host_groups", {}))
-  combined_objects_dedicated_hosts                                = merge(tomap({ (local.client_config.landingzone_key) = module.dedicated_hosts }), lookup(var.remote_objects, "dedicated_hosts", {}), lookup(var.data_sources, "dedicated_hosts", {}))
-  combined_objects_diagnostic_storage_accounts                    = merge(tomap({ (local.client_config.landingzone_key) = module.diagnostic_storage_accounts }), lookup(var.remote_objects, "diagnostic_storage_accounts", {}))
-  combined_objects_digital_twins_instances                        = merge(tomap({ (local.client_config.landingzone_key) = module.digital_twins_instances }), lookup(var.remote_objects, "digital_twins_instances", {}))
+  combined_objects_dedicated_host_groups                          = local._build_combined_object["dedicated_host_groups"]
+  combined_objects_dedicated_hosts                                = local._build_combined_object["dedicated_hosts"]
+  combined_objects_diagnostic_storage_accounts                    = local._build_combined_object["diagnostic_storage_accounts"]
+  combined_objects_digital_twins_instances                        = local._build_combined_object["digital_twins_instances"]
   combined_objects_disk_encryption_sets                           = merge(tomap({ (local.client_config.landingzone_key) = merge(module.disk_encryption_sets, module.disk_encryption_sets_external) }), lookup(var.remote_objects, "disk_encryption_sets", {}), lookup(var.remote_objects, "disk_encryption_sets_external", {}), lookup(var.data_sources, "disk_encryption_sets", {}))
-  combined_objects_dns_zones                                      = merge(tomap({ (local.client_config.landingzone_key) = module.dns_zones }), lookup(var.remote_objects, "dns_zones", {}), lookup(var.data_sources, "dns_zones", {}))
-  combined_objects_domain_name_registrations                      = merge(tomap({ (local.client_config.landingzone_key) = module.domain_name_registrations }), lookup(var.remote_objects, "domain_name_registrations", {}))
-  combined_objects_event_hub_auth_rules                           = merge(tomap({ (local.client_config.landingzone_key) = module.event_hub_auth_rules }), lookup(var.remote_objects, "event_hub_auth_rules", {}))
-  combined_objects_event_hub_namespaces                           = merge(tomap({ (local.client_config.landingzone_key) = module.event_hub_namespaces }), lookup(var.remote_objects, "event_hub_namespaces", {}), lookup(var.data_sources, "event_hub_namespaces", {}))
-  combined_objects_event_hubs                                     = merge(tomap({ (local.client_config.landingzone_key) = module.event_hubs }), lookup(var.remote_objects, "event_hubs", {}))
-  combined_objects_eventgrid_domains                              = merge(tomap({ (local.client_config.landingzone_key) = module.eventgrid_domain }), lookup(var.remote_objects, "eventgrid_domain", {}))
-  combined_objects_eventgrid_topics                               = merge(tomap({ (local.client_config.landingzone_key) = module.eventgrid_topic }), lookup(var.remote_objects, "eventgrid_topic", {}))
-  combined_objects_eventgrid_system_topics                        = merge(tomap({ (local.client_config.landingzone_key) = module.eventgrid_system_topic }), lookup(var.remote_objects, "eventgrid_system_topic", {}))
-  combined_objects_express_route_circuit_authorizations           = merge(tomap({ (local.client_config.landingzone_key) = module.express_route_circuit_authorizations }), lookup(var.remote_objects, "express_route_circuit_authorizations", {}))
-  combined_objects_express_route_circuit_peerings                 = merge(tomap({ (local.client_config.landingzone_key) = module.express_route_circuit_peerings }), lookup(var.remote_objects, "express_route_circuit_peerings", {}))
-  combined_objects_express_route_circuits                         = merge(tomap({ (local.client_config.landingzone_key) = module.express_route_circuits }), lookup(var.remote_objects, "express_route_circuits", {}), lookup(var.data_sources, "express_route_circuits", {}))
-  combined_objects_front_door                                     = merge(tomap({ (local.client_config.landingzone_key) = module.front_doors }), lookup(var.remote_objects, "front_doors", {}))
-  combined_objects_front_door_waf_policies                        = merge(tomap({ (local.client_config.landingzone_key) = module.front_door_waf_policies }), lookup(var.remote_objects, "front_door_waf_policies", {}))
-  combined_objects_function_apps                                  = merge(tomap({ (local.client_config.landingzone_key) = module.function_apps }), lookup(var.remote_objects, "function_apps", {}))
-  combined_objects_image_definitions                              = merge(tomap({ (local.client_config.landingzone_key) = module.image_definitions }), lookup(var.remote_objects, "image_definitions", {}))
-  combined_objects_integration_service_environment                = merge(tomap({ (local.client_config.landingzone_key) = module.integration_service_environment }), lookup(var.remote_objects, "integration_service_environment", {}))
-  combined_objects_iot_central_application                        = merge(tomap({ (local.client_config.landingzone_key) = module.iot_central_application }), lookup(var.remote_objects, "iot_central_application", {}))
-  combined_objects_iot_dps_certificate                            = merge(tomap({ (local.client_config.landingzone_key) = module.iot_dps_certificate }), lookup(var.remote_objects, "iot_dps_certificate", {}))
-  combined_objects_iot_dps_shared_access_policy                   = merge(tomap({ (local.client_config.landingzone_key) = module.iot_dps_shared_access_policy }), lookup(var.remote_objects, "iot_dps_shared_access_policy", {}))
-  combined_objects_iot_hub                                        = merge(tomap({ (local.client_config.landingzone_key) = module.iot_hub }), lookup(var.remote_objects, "iot_hub", {}))
-  combined_objects_iot_hub_certificate                            = merge(tomap({ (local.client_config.landingzone_key) = module.iot_hub_certificate }), lookup(var.remote_objects, "iot_hub_certificate", {}))
-  combined_objects_iot_hub_consumer_groups                        = merge(tomap({ (local.client_config.landingzone_key) = module.iot_hub_consumer_groups }), lookup(var.remote_objects, "iot_hub_consumer_groups", {}))
-  combined_objects_iot_hub_dps                                    = merge(tomap({ (local.client_config.landingzone_key) = module.iot_hub_dps }), lookup(var.remote_objects, "iot_hub_dps", {}))
-  combined_objects_iot_hub_shared_access_policy                   = merge(tomap({ (local.client_config.landingzone_key) = module.iot_hub_shared_access_policy }), lookup(var.remote_objects, "iot_hub_shared_access_policy", {}))
-  combined_objects_iot_security_device_group                      = merge(tomap({ (local.client_config.landingzone_key) = module.iot_security_device_group }), lookup(var.remote_objects, "iot_security_device_group", {}))
-  combined_objects_iot_security_solution                          = merge(tomap({ (local.client_config.landingzone_key) = module.iot_security_solution }), lookup(var.remote_objects, "iot_security_solution", {}))
-  combined_objects_keyvault_certificate_requests                  = merge(tomap({ (local.client_config.landingzone_key) = module.keyvault_certificate_requests }), lookup(var.remote_objects, "keyvault_certificate_requests", {}))
-  combined_objects_keyvault_certificates                          = merge(tomap({ (local.client_config.landingzone_key) = module.keyvault_certificates }), lookup(var.remote_objects, "keyvault_certificates", {}), lookup(var.data_sources, "keyvault_certificates", {}))
-  combined_objects_keyvault_keys                                  = merge(tomap({ (local.client_config.landingzone_key) = merge(module.keyvault_keys, lookup(var.data_sources, "keyvault_keys", {})) }), lookup(var.remote_objects, "keyvault_keys", {}), lookup(var.data_sources, "keyvault_keys", {}))
-  combined_objects_keyvaults                                      = merge(tomap({ (local.client_config.landingzone_key) = merge(module.keyvaults, lookup(var.data_sources, "keyvaults", {})) }), lookup(var.remote_objects, "keyvaults", {}))
-  combined_objects_kusto_clusters                                 = merge(tomap({ (local.client_config.landingzone_key) = module.kusto_clusters }), lookup(var.remote_objects, "kusto_clusters", {}), lookup(var.data_sources, "kusto_clusters", {}))
-  combined_objects_kusto_databases                                = merge(tomap({ (local.client_config.landingzone_key) = module.kusto_databases }), lookup(var.remote_objects, "kusto_databases", {}))
+  combined_objects_dns_zones                                      = local._build_combined_object["dns_zones"]
+  combined_objects_domain_name_registrations                      = local._build_combined_object["domain_name_registrations"]
+  combined_objects_event_hub_auth_rules                           = local._build_combined_object["event_hub_auth_rules"]
+  combined_objects_event_hub_namespaces                           = local._build_combined_object["event_hub_namespaces"]
+  combined_objects_event_hubs                                     = local._build_combined_object["event_hubs"]
+  combined_objects_eventgrid_domains                              = local._build_combined_object["eventgrid_domain"]
+  combined_objects_eventgrid_topics                               = local._build_combined_object["eventgrid_topic"]
+  combined_objects_eventgrid_system_topics                        = local._build_combined_object["eventgrid_system_topic"]
+  combined_objects_express_route_circuit_authorizations           = local._build_combined_object["express_route_circuit_authorizations"]
+  combined_objects_express_route_circuit_peerings                 = local._build_combined_object["express_route_circuit_peerings"]
+  combined_objects_express_route_circuits                         = local._build_combined_object["express_route_circuits"]
+  combined_objects_front_door                                     = local._build_combined_object["front_doors"]
+  combined_objects_front_door_waf_policies                        = local._build_combined_object["front_door_waf_policies"]
+  combined_objects_function_apps                                  = local._build_combined_object["function_apps"]
+  combined_objects_image_definitions                              = local._build_combined_object["image_definitions"]
+  combined_objects_integration_service_environment                = local._build_combined_object["integration_service_environment"]
+  combined_objects_iot_central_application                        = local._build_combined_object["iot_central_application"]
+  combined_objects_iot_dps_certificate                            = local._build_combined_object["iot_dps_certificate"]
+  combined_objects_iot_dps_shared_access_policy                   = local._build_combined_object["iot_dps_shared_access_policy"]
+  combined_objects_iot_hub                                        = local._build_combined_object["iot_hub"]
+  combined_objects_iot_hub_certificate                            = local._build_combined_object["iot_hub_certificate"]
+  combined_objects_iot_hub_consumer_groups                        = local._build_combined_object["iot_hub_consumer_groups"]
+  combined_objects_iot_hub_dps                                    = local._build_combined_object["iot_hub_dps"]
+  combined_objects_iot_hub_shared_access_policy                   = local._build_combined_object["iot_hub_shared_access_policy"]
+  combined_objects_iot_security_device_group                      = local._build_combined_object["iot_security_device_group"]
+  combined_objects_iot_security_solution                          = local._build_combined_object["iot_security_solution"]
+  combined_objects_keyvault_certificate_requests                  = local._build_combined_object["keyvault_certificate_requests"]
+  combined_objects_keyvault_certificates                          = local._build_combined_object["keyvault_certificates"]
+  combined_objects_keyvault_keys                                  = local._build_combined_object["keyvault_keys"]
+  combined_objects_keyvaults                                      = local._build_combined_object["keyvaults"]
+  combined_objects_kusto_clusters                                 = local._build_combined_object["kusto_clusters"]
+  combined_objects_kusto_databases                                = local._build_combined_object["kusto_databases"]
   combined_objects_lb                                             = merge(tomap({ (local.client_config.landingzone_key) = module.lb }), lookup(var.remote_objects, "lb", {}), lookup(var.data_sources, "load_balancers", {}))
-  combined_objects_lb_backend_address_pool                        = merge(tomap({ (local.client_config.landingzone_key) = module.lb_backend_address_pool }), lookup(var.remote_objects, "lb_backend_address_pool", {}))
-  combined_objects_lb_probe                                       = merge(tomap({ (local.client_config.landingzone_key) = module.lb_probe }), lookup(var.remote_objects, "lb_probe", {}))
-  combined_objects_load_balancers                                 = merge(tomap({ (local.client_config.landingzone_key) = module.load_balancers }), lookup(var.remote_objects, "load_balancers", {}), lookup(var.data_sources, "load_balancers", {}))
-  combined_objects_load_test                                      = merge(tomap({ (local.client_config.landingzone_key) = module.load_test }), lookup(var.remote_objects, "load_test", {}), lookup(var.data_sources, "load_test", {}))
-  combined_objects_log_analytics                                  = merge(tomap({ (local.client_config.landingzone_key) = module.log_analytics }), lookup(var.remote_objects, "log_analytics", {}), lookup(var.data_sources, "log_analytics", {}))
-  combined_objects_logic_app_integration_account                  = merge(tomap({ (local.client_config.landingzone_key) = module.logic_app_integration_account }), lookup(var.remote_objects, "logic_app_integration_account", {}), lookup(var.data_sources, "logic_app_integration_account", {}))
-  combined_objects_logic_app_standard                             = merge(tomap({ (local.client_config.landingzone_key) = module.logic_app_standard }), lookup(var.remote_objects, "logic_app_standard", {}))
-  combined_objects_logic_app_workflow                             = merge(tomap({ (local.client_config.landingzone_key) = module.logic_app_workflow }), lookup(var.remote_objects, "logic_app_workflow", {}), lookup(var.data_sources, "logic_app_workflow", {}))
-  combined_objects_machine_learning                               = merge(tomap({ (local.client_config.landingzone_key) = module.machine_learning_workspaces }), lookup(var.remote_objects, "machine_learning_workspaces", {}), lookup(var.data_sources, "machine_learning_workspaces", {}))
-  combined_objects_maintenance_configuration                      = merge(tomap({ (local.client_config.landingzone_key) = module.maintenance_configuration }), lookup(var.remote_objects, "maintenance_configuration", {}))
-  combined_objects_maintenance_assignment_virtual_machine         = merge(tomap({ (local.client_config.landingzone_key) = module.maintenance_assignment_virtual_machine }), lookup(var.remote_objects, "maintenance_assignment_virtual_machine", {}))
-  combined_objects_managed_identities                             = merge(tomap({ (local.client_config.landingzone_key) = module.managed_identities }), lookup(var.remote_objects, "managed_identities", {}), lookup(var.data_sources, "managed_identities", {}))
-  combined_objects_maps_accounts                                  = merge(tomap({ (local.client_config.landingzone_key) = module.maps_accounts }), lookup(var.remote_objects, "maps_accounts", {}))
-  combined_objects_monitor_action_groups                          = merge(tomap({ (local.client_config.landingzone_key) = module.monitor_action_groups }), lookup(var.remote_objects, "monitor_action_groups", {}), lookup(var.data_sources, "monitor_action_groups", {}))
-  combined_objects_mssql_databases                                = merge(tomap({ (local.client_config.landingzone_key) = module.mssql_databases }), lookup(var.remote_objects, "mssql_databases", {}), lookup(var.data_sources, "mssql_databases", {}))
-  combined_objects_mssql_elastic_pools                            = merge(tomap({ (local.client_config.landingzone_key) = merge(module.mssql_elastic_pools, lookup(var.data_sources, "mssql_elastic_pools", {})) }), lookup(var.remote_objects, "mssql_elastic_pools", {}))
-  combined_objects_mssql_managed_databases                        = merge(tomap({ (local.client_config.landingzone_key) = merge(module.mssql_managed_databases, module.mssql_managed_databases_v1) }), lookup(var.remote_objects, "mssql_managed_databases", {}), lookup(var.data_sources, "mssql_managed_databases", {}))
-  combined_objects_mssql_managed_instances                        = merge(tomap({ (local.client_config.landingzone_key) = merge(module.mssql_managed_instances, module.mssql_managed_instances_v1, lookup(var.data_sources, "mssql_managed_instances", {})) }), lookup(var.remote_objects, "mssql_managed_instances", {}), lookup(var.data_sources, "mssql_managed_instances", {}))
-  combined_objects_mssql_managed_instances_secondary              = merge(tomap({ (local.client_config.landingzone_key) = merge(module.mssql_managed_instances_secondary, module.mssql_managed_instances_secondary_v1, lookup(var.data_sources, "mssql_managed_instances_secondary", {})) }), lookup(var.remote_objects, "mssql_managed_instances_secondary", {}), lookup(var.remote_objects, "mssql_managed_instances_secondary", {}))
-  combined_objects_mssql_servers                                  = merge(tomap({ (local.client_config.landingzone_key) = merge(module.mssql_servers, lookup(var.data_sources, "mssql_servers", {})) }), lookup(var.remote_objects, "mssql_servers", {}))
-  combined_objects_mysql_flexible_server                          = merge(tomap({ (local.client_config.landingzone_key) = module.mysql_flexible_server }), lookup(var.remote_objects, "mysql_flexible_server", {}))
-  combined_objects_mysql_servers                                  = merge(tomap({ (local.client_config.landingzone_key) = module.mysql_servers }), lookup(var.remote_objects, "mysql_servers", {}), lookup(var.data_sources, "mysql_servers", {}))
-  combined_objects_nat_gateways                                   = merge(tomap({ (local.client_config.landingzone_key) = module.nat_gateways }), lookup(var.remote_objects, "nat_gateways", {}), lookup(var.data_sources, "nat_gateways", {}))
-  combined_objects_network_profiles                               = merge(tomap({ (local.client_config.landingzone_key) = module.network_profiles }), lookup(var.remote_objects, "network_profiles", {}))
-  combined_objects_network_security_groups                        = merge(tomap({ (local.client_config.landingzone_key) = module.network_security_groups }), lookup(var.remote_objects, "network_security_groups", {}), lookup(var.data_sources, "network_security_groups", {}))
-  combined_objects_network_watchers                               = merge(tomap({ (local.client_config.landingzone_key) = module.network_watchers }), lookup(var.remote_objects, "network_watchers", {}), lookup(var.data_sources, "network_watchers", {}))
-  combined_objects_networking                                     = merge(tomap({ (local.client_config.landingzone_key) = merge(module.networking, lookup(var.data_sources, "vnets", {})) }), lookup(var.remote_objects, "vnets", {}))
-  combined_objects_postgresql_flexible_servers                    = merge(tomap({ (local.client_config.landingzone_key) = module.postgresql_flexible_servers }), lookup(var.remote_objects, "postgresql_flexible_servers", {}))
-  combined_objects_postgresql_servers                             = merge(tomap({ (local.client_config.landingzone_key) = module.postgresql_servers }), lookup(var.remote_objects, "postgresql_servers", {}), lookup(var.data_sources, "postgresql_servers", {}))
-  combined_objects_private_dns                                    = merge(tomap({ (local.client_config.landingzone_key) = module.private_dns }), lookup(var.remote_objects, "private_dns", {}), lookup(var.data_sources, "private_dns", {}))
-  combined_objects_private_dns_resolver_dns_forwarding_rulesets   = merge(tomap({ (local.client_config.landingzone_key) = module.private_dns_resolver_dns_forwarding_rulesets }), lookup(var.remote_objects, "private_dns_resolver_dns_forwarding_rulesets", {}))
-  combined_objects_private_dns_resolver_inbound_endpoints         = merge(tomap({ (local.client_config.landingzone_key) = module.private_dns_resolver_inbound_endpoints }), lookup(var.remote_objects, "private_dns_resolver_inbound_endpoints", {}))
-  combined_objects_private_dns_resolver_outbound_endpoints        = merge(tomap({ (local.client_config.landingzone_key) = module.private_dns_resolver_outbound_endpoints }), lookup(var.remote_objects, "private_dns_resolver_outbound_endpoints", {}))
-  combined_objects_private_dns_resolvers                          = merge(tomap({ (local.client_config.landingzone_key) = module.private_dns_resolvers }), lookup(var.remote_objects, "private_dns_resolvers", {}))
-  combined_objects_private_endpoints                              = merge(tomap({ (local.client_config.landingzone_key) = module.private_endpoints }), lookup(var.remote_objects, "private_endpoints", {}))
-  combined_objects_proximity_placement_groups                     = merge(tomap({ (local.client_config.landingzone_key) = module.proximity_placement_groups }), lookup(var.remote_objects, "proximity_placement_groups", {}), lookup(var.data_sources, "proximity_placement_groups", {}))
-  combined_objects_public_ip_addresses                            = merge(tomap({ (local.client_config.landingzone_key) = module.public_ip_addresses }), lookup(var.remote_objects, "public_ip_addresses", {}), lookup(var.data_sources, "public_ip_addresses", {}))
-  combined_objects_public_ip_prefixes                             = merge(tomap({ (local.client_config.landingzone_key) = module.public_ip_prefixes }), lookup(var.remote_objects, "public_ip_prefixes", {}))
-  combined_objects_purview_accounts                               = merge(tomap({ (local.client_config.landingzone_key) = module.purview_accounts }), lookup(var.remote_objects, "purview_accounts", {}))
-  combined_objects_recovery_vaults                                = merge(tomap({ (local.client_config.landingzone_key) = merge(module.recovery_vaults, lookup(var.data_sources, "recovery_vaults", {})) }), lookup(var.remote_objects, "recovery_vaults", {}))
-  combined_objects_redis_caches                                   = merge(tomap({ (local.client_config.landingzone_key) = module.redis_caches }), lookup(var.remote_objects, "redis_caches", {}), lookup(var.data_sources, "redis_caches", {}))
-  combined_objects_relay_hybrid_connection                        = merge(tomap({ (local.client_config.landingzone_key) = module.relay_hybrid_connection }), lookup(var.remote_objects, "relay_hybrid_connection", {}))
-  combined_objects_relay_namespace                                = merge(tomap({ (local.client_config.landingzone_key) = module.relay_namespace }), lookup(var.remote_objects, "relay_namespace", {}))
+  combined_objects_lb_backend_address_pool                        = local._build_combined_object["lb_backend_address_pool"]
+  combined_objects_lb_probe                                       = local._build_combined_object["lb_probe"]
+  combined_objects_load_balancers                                 = local._build_combined_object["load_balancers"]
+  combined_objects_load_test                                      = local._build_combined_object["load_test"]
+  combined_objects_log_analytics                                  = local._build_combined_object["log_analytics"]
+  combined_objects_logic_app_integration_account                  = local._build_combined_object["logic_app_integration_account"]
+  combined_objects_logic_app_standard                             = local._build_combined_object["logic_app_standard"]
+  combined_objects_logic_app_workflow                             = local._build_combined_object["logic_app_workflow"]
+  combined_objects_machine_learning                               = local._build_combined_object["machine_learning_workspaces"]
+  combined_objects_maintenance_configuration                      = local._build_combined_object["maintenance_configuration"]
+  combined_objects_maintenance_assignment_virtual_machine         = local._build_combined_object["maintenance_assignment_virtual_machine"]
+  combined_objects_managed_identities                             = local._build_combined_object["managed_identities"]
+  combined_objects_maps_accounts                                  = local._build_combined_object["maps_accounts"]
+  combined_objects_monitor_action_groups                          = local._build_combined_object["monitor_action_groups"]
+  combined_objects_mssql_databases                                = local._build_combined_object["mssql_databases"]
+  combined_objects_mssql_elastic_pools                            = local._build_combined_object["mssql_elastic_pools"]
+  combined_objects_mssql_managed_databases                        = local._build_combined_object["mssql_managed_databases"]
+  combined_objects_mssql_managed_instances                        = local._build_combined_object["mssql_managed_instances"]
+  combined_objects_mssql_managed_instances_secondary              = local._build_combined_object["mssql_managed_instances_secondary"]
+  combined_objects_mssql_servers                                  = local._build_combined_object["mssql_servers"]
+  combined_objects_mysql_flexible_server                          = local._build_combined_object["mysql_flexible_server"]
+  combined_objects_mysql_servers                                  = local._build_combined_object["mysql_servers"]
+  combined_objects_nat_gateways                                   = local._build_combined_object["nat_gateways"]
+  combined_objects_network_profiles                               = local._build_combined_object["network_profiles"]
+  combined_objects_network_security_groups                        = local._build_combined_object["network_security_groups"]
+  combined_objects_network_watchers                               = local._build_combined_object["network_watchers"]
+  combined_objects_networking                                     = local._build_combined_object["vnets"]
+  combined_objects_postgresql_flexible_servers                    = local._build_combined_object["postgresql_flexible_servers"]
+  combined_objects_postgresql_servers                             = local._build_combined_object["postgresql_servers"]
+  combined_objects_private_dns                                    = local._build_combined_object["private_dns"]
+  combined_objects_private_dns_resolver_dns_forwarding_rulesets   = local._build_combined_object["private_dns_resolver_dns_forwarding_rulesets"]
+  combined_objects_private_dns_resolver_inbound_endpoints         = local._build_combined_object["private_dns_resolver_inbound_endpoints"]
+  combined_objects_private_dns_resolver_outbound_endpoints        = local._build_combined_object["private_dns_resolver_outbound_endpoints"]
+  combined_objects_private_dns_resolvers                          = local._build_combined_object["private_dns_resolvers"]
+  combined_objects_private_endpoints                              = local._build_combined_object["private_endpoints"]
+  combined_objects_proximity_placement_groups                     = local._build_combined_object["proximity_placement_groups"]
+  combined_objects_public_ip_addresses                            = local._build_combined_object["public_ip_addresses"]
+  combined_objects_public_ip_prefixes                             = local._build_combined_object["public_ip_prefixes"]
+  combined_objects_purview_accounts                               = local._build_combined_object["purview_accounts"]
+  combined_objects_recovery_vaults                                = local._build_combined_object["recovery_vaults"]
+  combined_objects_redis_caches                                   = local._build_combined_object["redis_caches"]
+  combined_objects_relay_hybrid_connection                        = local._build_combined_object["relay_hybrid_connection"]
+  combined_objects_relay_namespace                                = local._build_combined_object["relay_namespace"]
   combined_objects_resource_groups                                = merge(tomap({ (local.client_config.landingzone_key) = merge(local.resource_groups, lookup(var.data_sources, "resource_groups", {})) }), lookup(var.remote_objects, "resource_groups", {}))
-  combined_objects_route_tables                                   = merge(tomap({ (local.client_config.landingzone_key) = module.route_tables }), lookup(var.remote_objects, "route_tables", {}))
-  combined_objects_search_services                                = merge(tomap({ (local.client_config.landingzone_key) = module.search_service }), lookup(var.remote_objects, "search_services", {}), lookup(var.data_sources, "search_services", {}))
-  combined_objects_sentinel_watchlists                            = merge(tomap({ (local.client_config.landingzone_key) = module.sentinel_watchlists }), lookup(var.remote_objects, "sentinel_watchlists", {}))
-  combined_objects_servicebus_namespaces                          = merge(tomap({ (local.client_config.landingzone_key) = module.servicebus_namespaces }), lookup(var.remote_objects, "servicebus_namespaces", {}), lookup(var.data_sources, "servicebus_namespaces", {}))
-  combined_objects_servicebus_queues                              = merge(tomap({ (local.client_config.landingzone_key) = module.servicebus_queues }), lookup(var.remote_objects, "servicebus_queues", {}), lookup(var.data_sources, "servicebus_queues", {}))
-  combined_objects_servicebus_topics                              = merge(tomap({ (local.client_config.landingzone_key) = module.servicebus_topics }), lookup(var.remote_objects, "servicebus_topics", {}), lookup(var.data_sources, "servicebus_topics", {}))
-  combined_objects_signalr_services                               = merge(tomap({ (local.client_config.landingzone_key) = module.signalr_services }), lookup(var.remote_objects, "signalr_services", {}), lookup(var.data_sources, "signalr_services", {}))
-  combined_objects_storage_account_file_shares                    = merge(tomap({ (local.client_config.landingzone_key) = module.storage_account_file_shares }), lookup(var.remote_objects, "storage_account_file_shares", {}))
-  combined_objects_storage_account_queues                         = merge(tomap({ (local.client_config.landingzone_key) = module.storage_account_queues }), lookup(var.remote_objects, "storage_account_queues", {}))
-  combined_objects_storage_accounts                               = merge(tomap({ (local.client_config.landingzone_key) = merge(module.storage_accounts, lookup(var.data_sources, "storage_accounts", {})) }), lookup(var.remote_objects, "storage_accounts", {}))
-  combined_objects_storage_containers                             = merge(tomap({ (local.client_config.landingzone_key) = module.storage_containers }), lookup(var.remote_objects, "storage_containers", {}), lookup(var.data_sources, "storage_containers", {}))
-  combined_objects_synapse_workspaces                             = merge(tomap({ (local.client_config.landingzone_key) = module.synapse_workspaces }), lookup(var.remote_objects, "synapse_workspaces", {}), lookup(var.data_sources, "synapse_workspaces", {}))
-  combined_objects_traffic_manager_azure_endpoint                 = merge(tomap({ (local.client_config.landingzone_key) = module.traffic_manager_azure_endpoint }), lookup(var.remote_objects, "traffic_manager_azure_endpoint", {}))
-  combined_objects_traffic_manager_external_endpoint              = merge(tomap({ (local.client_config.landingzone_key) = module.traffic_manager_external_endpoint }), lookup(var.remote_objects, "traffic_manager_external_endpoint", {}))
-  combined_objects_traffic_manager_nested_endpoint                = merge(tomap({ (local.client_config.landingzone_key) = module.traffic_manager_nested_endpoint }), lookup(var.remote_objects, "traffic_manager_nested_endpoint", {}))
-  combined_objects_traffic_manager_profile                        = merge(tomap({ (local.client_config.landingzone_key) = module.traffic_manager_profile }), lookup(var.remote_objects, "traffic_manager_profile", {}))
+  combined_objects_route_tables                                   = local._build_combined_object["route_tables"]
+  combined_objects_search_services                                = local._build_combined_object["search_service"]
+  combined_objects_sentinel_watchlists                            = local._build_combined_object["sentinel_watchlists"]
+  combined_objects_servicebus_namespaces                          = local._build_combined_object["servicebus_namespaces"]
+  combined_objects_servicebus_queues                              = local._build_combined_object["servicebus_queues"]
+  combined_objects_servicebus_topics                              = local._build_combined_object["servicebus_topics"]
+  combined_objects_signalr_services                               = local._build_combined_object["signalr_services"]
+  combined_objects_storage_account_file_shares                    = local._build_combined_object["storage_account_file_shares"]
+  combined_objects_storage_account_queues                         = local._build_combined_object["storage_account_queues"]
+  combined_objects_storage_accounts                               = local._build_combined_object["storage_accounts"]
+  combined_objects_storage_containers                             = local._build_combined_object["storage_containers"]
+  combined_objects_synapse_workspaces                             = local._build_combined_object["synapse_workspaces"]
+  combined_objects_traffic_manager_azure_endpoint                 = local._build_combined_object["traffic_manager_azure_endpoint"]
+  combined_objects_traffic_manager_external_endpoint              = local._build_combined_object["traffic_manager_external_endpoint"]
+  combined_objects_traffic_manager_nested_endpoint                = local._build_combined_object["traffic_manager_nested_endpoint"]
+  combined_objects_traffic_manager_profile                        = local._build_combined_object["traffic_manager_profile"]
   combined_objects_virtual_hub_connections                        = merge(tomap({ (local.client_config.landingzone_key) = azurerm_virtual_hub_connection.vhub_connection }), lookup(var.remote_objects, "vhub_peerings", {}), lookup(var.remote_objects, "virtual_hub_connections", {}))
   combined_objects_virtual_hub_route_tables                       = merge(tomap({ (local.client_config.landingzone_key) = azurerm_virtual_hub_route_table.route_table }), lookup(var.remote_objects, "virtual_hub_route_tables", {}))
-  combined_objects_virtual_wans                                   = merge(tomap({ (local.client_config.landingzone_key) = merge(module.virtual_wans, lookup(var.data_sources, "virtual_wans", {})) }), lookup(var.remote_objects, "virtual_wans", {}), lookup(var.data_sources, "virtual_wans", {}))
-  combined_objects_virtual_hubs                                   = merge(tomap({ (local.client_config.landingzone_key) = merge(module.virtual_hubs, lookup(var.data_sources, "virtual_hubs", {})) }), lookup(var.remote_objects, "virtual_hubs", {}), lookup(var.data_sources, "virtual_hubs", {}))
-  combined_objects_virtual_machine_scale_sets                     = merge(tomap({ (local.client_config.landingzone_key) = module.virtual_machine_scale_sets }), lookup(var.remote_objects, "virtual_machine_scale_sets", {}), lookup(var.data_sources, "virtual_machine_scale_sets", {}))
-  combined_objects_virtual_machines                               = merge(tomap({ (local.client_config.landingzone_key) = module.virtual_machines }), lookup(var.remote_objects, "virtual_machines", {}), lookup(var.data_sources, "virtual_machines", {}))
-  combined_objects_virtual_subnets                                = merge(tomap({ (local.client_config.landingzone_key) = merge(module.virtual_subnets, lookup(var.data_sources, "virtual_subnets", {})) }), lookup(var.remote_objects, "virtual_subnets", {}))
-  combined_objects_vmware_clusters                                = merge(tomap({ (local.client_config.landingzone_key) = module.vmware_clusters }), lookup(var.remote_objects, "vmware_clusters", {}))
-  combined_objects_vmware_express_route_authorizations            = merge(tomap({ (local.client_config.landingzone_key) = module.vmware_express_route_authorizations }), lookup(var.remote_objects, "vmware_express_route_authorizations", {}))
-  combined_objects_vmware_private_clouds                          = merge(tomap({ (local.client_config.landingzone_key) = module.vmware_private_clouds }), lookup(var.remote_objects, "vmware_private_clouds", {}), lookup(var.data_sources, "vmware_private_clouds", {}))
-  combined_objects_vpn_gateway_connections                        = merge(tomap({ (local.client_config.landingzone_key) = module.vpn_gateway_connections }), lookup(var.remote_objects, "vpn_gateway_connections", {}))
-  combined_objects_vpn_gateway_nat_rules                          = merge(tomap({ (local.client_config.landingzone_key) = module.vpn_gateway_nat_rules }), lookup(var.remote_objects, "vpn_gateway_nat_rules", {}))
-  combined_objects_vpn_sites                                      = merge(tomap({ (local.client_config.landingzone_key) = module.vpn_sites }), lookup(var.remote_objects, "vpn_sites", {}))
-  combined_objects_web_pubsub_hubs                                = merge(tomap({ (local.client_config.landingzone_key) = module.web_pubsub_hubs }), lookup(var.remote_objects, "web_pubsub_hubs", {}))
-  combined_objects_web_pubsubs                                    = merge(tomap({ (local.client_config.landingzone_key) = module.web_pubsubs }), lookup(var.remote_objects, "web_pubsubs", {}))
-  combined_objects_wvd_application_groups                         = merge(tomap({ (local.client_config.landingzone_key) = module.wvd_application_groups }), lookup(var.remote_objects, "wvd_application_groups", {}))
-  combined_objects_wvd_applications                               = merge(tomap({ (local.client_config.landingzone_key) = module.wvd_applications }), lookup(var.remote_objects, "wvd_applications", {}))
-  combined_objects_wvd_host_pools                                 = merge(tomap({ (local.client_config.landingzone_key) = module.wvd_host_pools }), lookup(var.remote_objects, "wvd_host_pools", {}))
-  combined_objects_wvd_workspaces                                 = merge(tomap({ (local.client_config.landingzone_key) = module.wvd_workspaces }), lookup(var.remote_objects, "wvd_workspaces", {}))
+  combined_objects_virtual_wans                                   = local._build_combined_object["virtual_wans"]
+  combined_objects_virtual_hubs                                   = local._build_combined_object["virtual_hubs"]
+  combined_objects_virtual_machine_scale_sets                     = local._build_combined_object["virtual_machine_scale_sets"]
+  combined_objects_virtual_machines                               = local._build_combined_object["virtual_machines"]
+  combined_objects_virtual_subnets                                = local._build_combined_object["virtual_subnets"]
+  combined_objects_vmware_clusters                                = local._build_combined_object["vmware_clusters"]
+  combined_objects_vmware_express_route_authorizations            = local._build_combined_object["vmware_express_route_authorizations"]
+  combined_objects_vmware_private_clouds                          = local._build_combined_object["vmware_private_clouds"]
+  combined_objects_vpn_gateway_connections                        = local._build_combined_object["vpn_gateway_connections"]
+  combined_objects_vpn_gateway_nat_rules                          = local._build_combined_object["vpn_gateway_nat_rules"]
+  combined_objects_vpn_sites                                      = local._build_combined_object["vpn_sites"]
+  combined_objects_web_pubsub_hubs                                = local._build_combined_object["web_pubsub_hubs"]
+  combined_objects_web_pubsubs                                    = local._build_combined_object["web_pubsubs"]
+  combined_objects_wvd_application_groups                         = local._build_combined_object["wvd_application_groups"]
+  combined_objects_wvd_applications                               = local._build_combined_object["wvd_applications"]
+  combined_objects_wvd_host_pools                                 = local._build_combined_object["wvd_host_pools"]
+  combined_objects_wvd_workspaces                                 = local._build_combined_object["wvd_workspaces"]
 
   combined_objects_subscriptions = merge(
     tomap(
